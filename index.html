@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>INK OS</title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Syncopate:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-main: #000000;
+            --accent: #ffffff;
+            --border: rgba(255, 255, 255, 0.15);
+
+            /* Rarity Colors */
+            --c-common: #a1a1aa;
+            --c-uncommon: #22c55e;
+            --c-rare: #3b82f6;
+            --c-ultra: #a855f7;
+            --c-covert: #ef4444;
+            --c-secret: #eab308;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: white;
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .font-tech {
+            font-family: 'Syncopate', sans-serif;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        #snow-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.4;
+        }
+
+        /* UI Elements */
+        .drawer {
+            position: fixed;
+            inset: 0;
+            background: #050505;
+            z-index: 50;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drawer.active {
+            transform: translateY(0);
+        }
+
+        .drawer-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 150px;
+        }
+
+        .drawer-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #000;
+            z-index: 10;
+        }
+
+        .btn-nexus {
+            background: #111;
+            border: 1px solid var(--border);
+            color: white;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 14px;
+            width: 100%;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-nexus:active {
+            transform: scale(0.96);
+            background: #222;
+        }
+
+        .card {
+            background: #0a0a0a;
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        #bottom-profile {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            border-top: 1px solid var(--border);
+            z-index: 40;
+            transition: transform 0.3s ease;
+            padding-bottom: env(safe-area-inset-bottom);
+            backdrop-filter: blur(10px);
+        }
+
+        #bottom-profile.minimized {
+            transform: translateY(calc(100% - 30px));
+        }
+
+        .input-nexus {
+            background: #111;
+            border: 1px solid #333;
+            color: white;
+            padding: 12px;
+            width: 100%;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        /* --- TITLES STYLES --- */
+        .rarity-common {
+            border-left: 3px solid var(--c-common);
+            color: var(--c-common);
+        }
+
+        .rarity-uncommon {
+            border-left: 3px solid var(--c-uncommon);
+            color: #fff;
+        }
+
+        .rarity-rare {
+            border-left: 3px solid var(--c-rare);
+            color: #fff;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .rarity-ultra {
+            border-left: 3px solid var(--c-ultra);
+            color: #fff;
+            background: rgba(168, 85, 247, 0.1);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
+        }
+
+        .rarity-covert {
+            border-left: 3px solid var(--c-covert);
+            color: var(--c-covert);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+        }
+
+        .rarity-secret {
+            border: 1px solid var(--c-secret);
+            color: var(--c-secret);
+            animation: pulse-gold 2s infinite;
+            text-shadow: 0 0 10px var(--c-secret);
+        }
+
+        /* STAR TITLES */
+        .rarity-star-1 {
+            border: 1px solid #cd7f32;
+            color: #ffcc99;
+            text-shadow: 0 0 5px #cd7f32;
+        }
+
+        .rarity-star-2 {
+            border: 1px solid #c0c0c0;
+            color: #fff;
+            animation: shine 3s infinite;
+        }
+
+        .rarity-star-3 {
+            border: 1px solid #ffd700;
+            color: #ffd700;
+            box-shadow: inset 0 0 10px #ffd700;
+        }
+
+        .rarity-star-4 {
+            border: 1px solid #ff0000;
+            color: #ff4d4d;
+            animation: pulse-red 1s infinite;
+        }
+
+        .rarity-star-5 {
+            border: 1px solid #50c878;
+            color: #50c878;
+            box-shadow: 0 0 15px #50c878;
+        }
+
+        .rarity-star-6 {
+            border: 2px solid transparent;
+            background: linear-gradient(#000, #000) padding-box, linear-gradient(45deg, #FFD700, #ff0055, #00f3ff) border-box;
+            animation: rgb-border 3s linear infinite;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        @keyframes pulse-gold {
+            0% {
+                opacity: 0.7;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.7;
+            }
+        }
+
+        @keyframes pulse-red {
+            0% {
+                text-shadow: 0 0 5px red;
+            }
+
+            100% {
+                text-shadow: 0 0 15px red;
+            }
+        }
+
+        @keyframes shine {
+            0% {
+                opacity: 0.8;
+            }
+
+            50% {
+                opacity: 1;
+                text-shadow: 0 0 10px white;
+            }
+
+            100% {
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes rgb-border {
+            0% {
+                filter: hue-rotate(0deg);
+            }
+
+            100% {
+                filter: hue-rotate(360deg);
+            }
+        }
+
+        /* Admin */
+        #admin-curtain {
+            background: #080808;
+            border-bottom: 2px solid #ff0055;
+            transition: transform 0.5s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+
+        .admin-active {
+            transform: translateY(0) !important;
+        }
+
+        .admin-pull-tab {
+            background: #ff0055;
+            width: 60px;
+            height: 4px;
+            border-radius: 0 0 4px 4px;
+            z-index: 101;
+            cursor: pointer;
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast-item {
+            background: #111;
+            color: white;
+            padding: 10px 15px;
+            border-left: 3px solid white;
+            border-radius: 4px;
+            font-size: 12px;
+            animation: slideIn 0.3s forwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+            }
+
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+            }
+
+            to {
+                transform: translateX(100%);
+            }
+        }
+
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="snow-canvas"></canvas>
+
+    <div id="loader">
+        <i class="fas fa-circle-notch fa-spin text-4xl text-white"></i>
+        <p class="text-xs text-gray-500 mt-2">Connecting...</p>
+    </div>
+
+    <div id="toast-container"></div>
+    <div id="admin-trigger" class="admin-pull-tab" onclick="toggleAdmin()"></div>
+
+    <!-- ADMIN PANEL -->
+    <div id="admin-curtain"
+        class="fixed top-0 left-0 w-full h-full z-[100] -translate-y-full overflow-y-auto p-6 pb-40">
+        <div class="flex justify-between items-center mb-8 pt-4">
+            <h2 class="font-tech text-xl text-[#ff0055]">ADMIN</h2>
+            <button onclick="toggleAdmin()" class="text-xs border border-white/20 px-4 py-2 rounded">CLOSE</button>
+        </div>
+        <div class="space-y-6">
+            <div class="card border-l-4 border-l-blue-500">
+                <h3 class="font-bold text-xs text-blue-400 mb-1">TOTAL USERS</h3>
+                <p class="font-tech text-3xl text-white" id="adm-total-users">0</p>
+            </div>
+
+            <!-- LINK MANAGER -->
+            <div class="card border-l-4 border-l-green-500">
+                <h3 class="font-bold mb-4 text-xs text-green-400">TOURNAMENT MANAGER</h3>
+                <select id="adm-tourn-select" onchange="loadAdminTeams()" class="input-nexus mb-3">
+                    <option value="">Select Tournament...</option>
+                </select>
+                <div id="adm-link-area" class="hidden border-t border-white/10 pt-3">
+                    <input id="adm-link-input" class="input-nexus mb-3" placeholder="https://roblox.com/games/..."
+                        type="url">
+                    <button onclick="sendLinkToAll(this)"
+                        class="btn-nexus mb-3 text-xs bg-white text-black hover:bg-gray-200"
+                        data-lang="adm_send_all">SEND LINK TO ALL TEAMS</button>
+                    <p class="text-[10px] opacity-50 mb-2 mt-4 font-mono">ACTIVE TEAMS:</p>
+                    <div id="adm-teams-list" class="space-y-2 max-h-[150px] overflow-y-auto mb-4"></div>
+                    <div id="adm-score-area" class="hidden border-t border-white/10 pt-3">
+                        <p class="text-[10px] opacity-50 mb-2 font-mono">CS SCORE CONTROL:</p>
+                        <div class="flex gap-2 mb-3">
+                            <input id="adm-score-1" type="number" class="input-nexus" placeholder="T1 Score">
+                            <input id="adm-score-2" type="number" class="input-nexus" placeholder="T2 Score">
+                        </div>
+                        <button onclick="updateTournamentScore(this)"
+                            class="btn-nexus text-xs bg-cyan-600/20 border-cyan-500 text-cyan-300">UPDATE SCORE</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="font-bold mb-4 text-xs text-gray-400">USERS LIST</h3>
+                <div id="adm-users-list" class="max-h-[200px] overflow-y-auto space-y-2 pr-2"></div>
+            </div>
+
+            <div class="card">
+                <h3 class="font-bold mb-4 text-xs text-gray-400">CREATE TOURNAMENT</h3>
+                <input id="adm-format" class="input-nexus mb-3" placeholder="Format">
+                <div class="flex gap-2 mb-3">
+                    <input id="adm-prize-rbx" type="number" class="input-nexus" placeholder="Robux">
+                    <input id="adm-prize-gems" type="number" class="input-nexus" placeholder="Gems">
+                </div>
+                <select id="adm-team-size" class="input-nexus mb-4">
+                    <option value="1">Solo</option>
+                    <option value="2">Duo</option>
+                    <option value="4">Squad</option>
+                    <option value="5">CS (5v5)</option>
+                </select>
+                <button onclick="createTournament(this)" class="btn-nexus text-[#ff0055] border-[#ff0055]/50"
+                    data-lang="adm_publish">PUBLISH</button>
+            </div>
+
+            <div class="card">
+                <h3 class="font-bold mb-4 text-xs text-gray-400">GEMS</h3>
+                <input id="adm-user-id" class="input-nexus mb-3" type="number" placeholder="ID">
+                <input id="adm-amount" class="input-nexus mb-4" type="number" placeholder="Amount">
+                <button onclick="giveGems(this)" class="btn-nexus text-green-400 border-green-400/50"
+                    data-lang="adm_send">SEND</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN UI -->
+    <div class="relative z-10 p-5 pb-32">
+        <header class="flex justify-between items-center mb-10 pt-2">
+            <div>
+                <h1 class="text-3xl font-tech font-bold text-white">INK<span class="opacity-30">OS</span></h1>
+                <p class="text-[9px] tracking-[3px] uppercase font-bold mt-1 text-gray-500" data-lang="subtitle">
+                    Tournament Platform</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="openDrawer('drawer-notif')" class="w-10 h-10 btn-nexus !p-0 rounded-lg relative">
+                    <i class="fas fa-bell"></i>
+                    <div id="notif-dot" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full hidden"></div>
+                </button>
+                <button onclick="toggleLang()" class="w-10 h-10 btn-nexus !p-0 rounded-lg text-[10px] font-bold"
+                    id="lang-btn">RU</button>
+                <button onclick="openDrawer('drawer-shop')"
+                    class="w-10 h-10 btn-nexus !p-0 rounded-lg text-yellow-500"><i
+                        class="fas fa-shopping-cart"></i></button>
+            </div>
+        </header>
+
+        <h2 class="text-[10px] font-bold text-gray-500 mb-4 uppercase tracking-widest pl-1" data-lang="active_events">
+            Active Events</h2>
+        <div id="tournaments-list" class="space-y-4"></div>
+    </div>
+
+    <!-- PROFILE BAR -->
+    <div id="bottom-profile">
+        <div onclick="toggleProfile()" class="h-6 w-full flex justify-center items-center cursor-pointer opacity-30">
+            <div class="w-8 h-1 bg-white rounded-full"></div>
+        </div>
+        <div class="profile-content p-5 flex items-center gap-5">
+            <div class="relative">
+                <img id="prof-avatar" src="https://placehold.co/100"
+                    class="w-14 h-14 rounded-xl object-cover bg-gray-800 border border-white/10">
+                <div id="prof-device-icon"
+                    class="absolute -bottom-2 -right-2 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs border border-white/20">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+            </div>
+            <div class="flex-1 overflow-hidden">
+                <h3 id="prof-name" class="font-bold text-lg leading-none truncate w-full text-white mb-1">...</h3>
+                <div id="prof-titles-container" class="flex flex-wrap gap-1 mb-2"></div>
+                <div class="flex gap-4 text-xs font-mono text-gray-400">
+                    <span class="flex items-center gap-1"><i class="fas fa-trophy text-yellow-500"></i> <span
+                            id="prof-wins" class="text-white">0</span></span>
+                    <span class="flex items-center gap-1"><i class="fas fa-gem text-blue-400"></i> <span id="prof-gems"
+                            class="text-white">0</span></span>
+                </div>
+            </div>
+            <button onclick="openDrawer('drawer-inventory')"
+                class="h-10 px-4 text-xs border border-white/10 bg-white/5 rounded-lg font-bold"
+                data-lang="inv">INV</button>
+        </div>
+    </div>
+
+    <!-- DRAWERS -->
+    <div id="drawer-notif" class="drawer">
+        <div class="drawer-header">
+            <h2 class="font-tech text-blue-400">NOTIFICATIONS</h2><button onclick="closeDrawer('drawer-notif')"
+                class="text-gray-500"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="drawer-content" id="notif-list">
+            <p class="text-center opacity-30 mt-10 font-mono text-xs">NO DATA</p>
+        </div>
+    </div>
+
+    <div id="drawer-reg" class="drawer">
+        <div class="drawer-content flex flex-col justify-center h-full">
+            <div class="text-center mb-10">
+                <h2 class="font-tech text-4xl mb-2 text-white" data-lang="welcome">WELCOME</h2>
+                <p class="text-xs opacity-50 tracking-widest font-mono" data-lang="setup_profile">INITIALIZE SYSTEM</p>
+            </div>
+            <div class="mb-8">
+                <label class="text-[10px] font-bold uppercase mb-3 block text-gray-500 tracking-widest pl-1"
+                    data-lang="choose_platform">1. Platform</label>
+                <div class="flex gap-4">
+                    <button onclick="selectDevice('mobile')" id="dev-mobile"
+                        class="flex-1 p-6 border border-white/10 rounded-2xl bg-white/5 opacity-50"><i
+                            class="fas fa-mobile-alt text-3xl mb-3"></i><br><span class="font-bold text-xs"
+                            data-lang="phone">PHONE</span></button>
+                    <button onclick="selectDevice('pc')" id="dev-pc"
+                        class="flex-1 p-6 border border-white/10 rounded-2xl bg-white/5 opacity-50"><i
+                            class="fas fa-desktop text-3xl mb-3"></i><br><span class="font-bold text-xs"
+                            data-lang="pc">PC</span></button>
+                </div>
+            </div>
+            <div class="mb-10">
+                <label class="text-[10px] font-bold uppercase mb-3 block text-gray-500 tracking-widest pl-1"
+                    data-lang="total_wins">2. Statistics</label>
+                <input id="reg-wins" type="tel" inputmode="numeric" class="input-nexus text-center font-mono text-xl"
+                    placeholder="000" onfocus="scrollToInput(this)">
+            </div>
+            <button onclick="completeRegistration(this)" class="btn-nexus py-5 text-sm"><span
+                    data-lang="start_os">INITIALIZE</span></button>
+            <div class="h-[200px]"></div>
+        </div>
+    </div>
+
+    <div id="drawer-team" class="drawer">
+        <div class="drawer-header">
+            <h2 class="font-tech" id="tm-title" data-lang="teams">TEAMS</h2><button onclick="closeDrawer('drawer-team')"
+                class="text-gray-500"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="drawer-content" id="team-content"></div>
+    </div>
+
+    <div id="drawer-shop" class="drawer">
+        <div class="drawer-header">
+            <h2 class="font-tech text-yellow-500" data-lang="shop">MARKET</h2><button
+                onclick="closeDrawer('drawer-shop')" class="text-gray-500"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="drawer-content space-y-4">
+            <div class="card border-yellow-500/20 bg-gradient-to-b from-yellow-900/20 to-transparent relative">
+                <div class="absolute top-3 right-3 bg-yellow-500 text-black text-[9px] font-bold px-2 py-0.5 rounded"
+                    data-lang="daily">DAILY</div>
+                <h3 class="font-tech text-xl mt-2 text-yellow-100" data-lang="free_case">FREE SUPPLY</h3>
+                <p class="text-xs opacity-50 mb-4 font-mono" data-lang="common_rare">Class: Common - Rare</p>
+                <button id="btn-daily" onclick="openLootbox('daily', this)"
+                    class="btn-nexus text-xs py-3 border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10"
+                    data-lang="open_free">CLAIM</button>
+                <p id="daily-timer" class="text-[10px] mt-2 opacity-50 hidden text-center font-mono"
+                    data-lang="cooldown">COOLDOWN</p>
+            </div>
+            <div class="card border-purple-500/20 bg-gradient-to-b from-purple-900/20 to-transparent">
+                <h3 class="font-tech text-xl mt-2 text-purple-300" data-lang="premium_case">ELITE SUPPLY</h3>
+                <p class="text-xs opacity-50 mb-4 font-mono" data-lang="chance_secret">Class: Rare - Secret</p>
+                <button onclick="openLootbox('premium', this)"
+                    class="btn-nexus text-xs py-3 bg-purple-600/20 border-purple-500 text-purple-300 hover:bg-purple-600/40"
+                    id="btn-premium">PURCHASE (100)</button>
+            </div>
+            <div class="p-4 bg-white/5 rounded-lg border border-white/5 mt-6">
+                <h4 class="text-[9px] font-bold uppercase opacity-40 mb-3 tracking-widest text-center">DROP PROBABILITY
+                </h4>
+                <div class="text-[10px] opacity-70 text-center font-mono leading-relaxed" id="drop-rates"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="drawer-inventory" class="drawer">
+        <div class="drawer-header">
+            <h2 class="font-tech" data-lang="inventory">STORAGE (MAX 3)</h2><button
+                onclick="closeDrawer('drawer-inventory')" class="text-gray-500"><i
+                    class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="drawer-content" id="inventory-list"></div>
+    </div>
+
+    <div id="drawer-user-view" class="drawer">
+        <div class="drawer-header">
+            <h2 class="font-tech">DATABASE</h2><button onclick="closeDrawer('drawer-user-view')"
+                class="text-gray-500"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="drawer-content">
+            <div class="flex flex-col items-center mb-10 mt-6">
+                <img id="view-avatar" src=""
+                    class="w-24 h-24 rounded-2xl border-2 border-white/10 mb-4 bg-gray-800 object-cover">
+                <h2 id="view-name" class="font-bold text-2xl mb-3 tracking-wide">...</h2>
+                <div id="view-titles-container" class="flex gap-2 flex-wrap justify-center mb-6"></div>
+                <div class="grid grid-cols-3 gap-3 w-full">
+                    <div class="bg-white/5 p-3 rounded-lg text-center border border-white/5">
+                        <p class="text-[9px] opacity-40 font-bold uppercase tracking-widest mb-1">WINS</p>
+                        <p class="font-mono text-yellow-500" id="view-wins">0</p>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg text-center border border-white/5">
+                        <p class="text-[9px] opacity-40 font-bold uppercase tracking-widest mb-1">GEMS</p>
+                        <p class="font-mono text-cyan-400" id="view-gems">0</p>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg text-center border border-white/5">
+                        <p class="text-[9px] opacity-40 font-bold uppercase tracking-widest mb-1">PLATFORM</p>
+                        <p class="font-mono" id="view-device">-</p>
+                    </div>
+                </div>
+            </div>
+            <h3 class="text-[10px] font-bold opacity-40 uppercase tracking-widest mb-4 px-1">INVENTORY LOG</h3>
+            <div id="view-inventory-list" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <div id="modal-overlay"
+        class="fixed inset-0 bg-black/90 z-[400] hidden flex items-center justify-center p-6 backdrop-blur-sm">
+        <div class="card w-full max-w-sm relative bg-[#111] border border-white/20" id="modal-content"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update, remove, get, push, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCK7gn8Xl-AW93FTni7q7Rx1QTUw0ILiCs",
+            authDomain: "ink-game-843c1.firebaseapp.com",
+            databaseURL: "https://ink-game-843c1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "ink-game-843c1",
+            storageBucket: "ink-game-843c1.firebasestorage.app",
+            messagingSenderId: "547943681956",
+            appId: "1:547943681956:web:aa7db2830eca6438f7fb31",
+            measurementId: "G-BPW1BM3H1N"
+        };
+
+        const ADMIN_IDS = [5501685605, 5432051595];
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const tg = window.Telegram.WebApp;
+
+        tg.expand();
+        tg.enableClosingConfirmation();
+        tg.setHeaderColor('#000000');
+        tg.setBackgroundColor('#000000');
+
+        // --- ИСПРАВЛЕНИЕ: ГЕНЕРАЦИЯ УНИКАЛЬНОГО ID ДЛЯ БРАУЗЕРА ---
+        // Если это не Телеграм, создаем случайный ID, чтобы тест всегда вызывал регистрацию
+        const isTg = !!tg.initDataUnsafe?.user;
+        let user = tg.initDataUnsafe?.user || {
+            id: Math.floor(Math.random() * 100000000), // Случайный ID для тестов
+            first_name: "Operative",
+            username: "guest",
+            photo_url: ""
+        };
+
+        // Для принудительного теста админки в браузере (раскомментировать)
+        // user.id = 5501685605; 
+
+        let dbUser = null;
+        let selectedDevice = null;
+        let titleCounts = {};
+        let totalUsersCount = 0;
+        let lastActionTime = 0;
+        let adminActiveTeams = {};
+
+        function checkSpam() {
+            if (Date.now() - lastActionTime < 1000) { showToast("Slow down!", "warning"); return true; }
+            lastActionTime = Date.now();
+            return false;
+        }
+
+        const titlesMeta = [
+            { id: 't1', name: "ROOKIE", rarity: "common" }, { id: 't2', name: "TRYHARD", rarity: "common" },
+            { id: 't3', name: "SNIPER", rarity: "uncommon" }, { id: 't4', name: "CAPTAIN", rarity: "uncommon" },
+            { id: 't5', name: "LEGEND", rarity: "rare" }, { id: 't6', name: "PREDATOR", rarity: "rare" },
+            { id: 't7', name: "INK MASTER", rarity: "ultra" }, { id: 't8', name: "GHOST", rarity: "covert" },
+            { id: 't9', name: "ADMIN SLAYER", rarity: "secret" },
+            { id: 't_mopfik', name: "мопфик❤", rarity: "secret" },
+            { id: 't_walter', name: "Уолтер Уайт", rarity: "secret" },
+            { id: 't_creator', name: "Создатель", rarity: "secret" },
+            { id: 't_star_5', name: "STARTER", rarity: 'star-1' },
+            { id: 't_star_10', name: "OFFICER", rarity: 'star-2' },
+            { id: 't_star_15', name: "COMMANDER", rarity: 'star-3' },
+            { id: 't_star_20', name: "GENERAL", rarity: 'star-4' },
+            { id: 't_star_50', name: "TYCOON", rarity: 'star-5' },
+            { id: 't_star_100', name: "GODFATHER", rarity: 'star-6' }
+        ];
+
+        const rarityOrder = { 'star-6': 0, 'star-5': 1, 'star-4': 2, 'star-3': 3, 'star-2': 4, 'star-1': 5, 'secret': 6, 'covert': 7, 'ultra': 8, 'rare': 9, 'uncommon': 10, 'common': 11 };
+
+        let currentLang = localStorage.getItem('ink_lang') || 'ru';
+        const translations = {
+            en: {
+                subtitle: "Tournament Platform", active_events: "Active Operations", welcome: "WELCOME", setup_profile: "INITIALIZE SYSTEM",
+                choose_platform: "1. Select Platform", phone: "PHONE", pc: "PC", total_wins: "2. Confirm Stats", start_os: "INITIALIZE",
+                teams: "TEAMS", shop: "MARKET", daily: "DAILY", free_case: "FREE SUPPLY", common_rare: "Class: Common - Rare", open_free: "CLAIM",
+                cooldown: "RECHARGING", premium_case: "ELITE SUPPLY", chance_secret: "Class: Rare - Secret", inventory: "STORAGE", inv: "INV",
+                no_active: "NO ACTIVE OPERATIONS", live: "LIVE", solo: "SOLO", duo: "DUO", squad: "SQUAD", loading: "ACCESSING...",
+                kick: "DISCHARGE", requests: "PENDING", yes: "ACCEPT", no: "DENY", leave_team: "ABORT", creator: "Leader", join: "ENGAGE",
+                create_team: "FORM TEAM", new_team_name: "Unit Name", or_join: "OR ENGAGE", no_open_teams: "No active units",
+                select_device: "Select Device", enter_wins: "Enter Wins", wait_cooldown: "Wait recharge", not_enough_gems: "Insufficient Funds",
+                you_got: "ACQUIRED", equipped: "EQUIPPED", created: "CONFIRMED", sent: "TRANSMITTED", user_not_found: "TARGET NOT FOUND", close: "CLOSE",
+                select_new_owner: "TRANSFER COMMAND", open_premium: "PURCHASE (100)", delete_team: "Disband Unit?", leave_team_confirm: "Abort mission?",
+                kick_user: "Discharge op?", request_sent: "Transmitted", enter_name: "Input Name", common: "Common", uncommon: "Uncommon",
+                rare: "Rare", ultra: "Ultra", covert: "Covert", secret: "Secret", no_title: "NO DATA",
+                owned_by: "Global", total_users_title: "TOTAL OPERATIVES", max_titles_reached: "Max 3 slots used!",
+                prize: "Prize", format: "Format", team_size: "Squad Size", robux: "Credits", gems: "Gems",
+                profile_created: "Identity Established", team_created: "Unit Formed", request_accepted: "Op Accepted", request_declined: "Op Denied",
+                user_kicked: "Op Discharged", team_deleted: "Unit Disbanded", left_team: "Withdrawn", left_team_owner: "Command Transferred",
+                select_tournament: "Select Op", adm_send: "SEND", adm_publish: "PUBLISH", adm_send_all: "SEND TO ALL",
+                score: "Score", update_score: "UPDATE SCORE", score_updated: "Score Updated", cs_format: "5v5 (Match)",
+                terrorists: "Terrorists", counter_terrorists: "Counter-Terrorists"
+            },
+            ru: {
+                subtitle: "Турнирная Платформа", active_events: "Активные Операции", welcome: "ДОБРО ПОЖАЛОВАТЬ", setup_profile: "Инициализация",
+                choose_platform: "1. Платформа", phone: "ТЕЛЕФОН", pc: "ПК", total_wins: "2. Статистика", start_os: "ЗАПУСК",
+                teams: "ОТРЯДЫ", shop: "РЫНОК", daily: "ЕЖЕДНЕВНО", free_case: "БЕСПЛАТНО", common_rare: "Класс: Обычные - Редкие", open_free: "ПОЛУЧИТЬ",
+                cooldown: "Ожидание", premium_case: "ЭЛИТНЫЙ КЕЙС", chance_secret: "Класс: Редкие - Секретные", inventory: "СКЛАД", inv: "ИНВ",
+                no_active: "НЕТ АКТИВНЫХ ОПЕРАЦИЙ", live: "АКТИВНО", solo: "СОЛО", duo: "ДУО", squad: "СКВАД", loading: "ЗАГРУЗКА...",
+                kick: "КИК", requests: "ЗАПРОСЫ", yes: "ДА", no: "НЕТ", leave_team: "ПОКИНУТЬ", creator: "Лидер", join: "ВСТУПИТЬ",
+                create_team: "СОЗДАТЬ", new_team_name: "Название", or_join: "ИЛИ ВСТУПИТЬ", no_open_teams: "Нет отрядов",
+                select_device: "Выберите устройство", enter_wins: "Введите победы", wait_cooldown: "Таймер активен", not_enough_gems: "Не хватает средств",
+                you_got: "ПОЛУЧЕНО", equipped: "Экипировано", created: "Создано", sent: "Отправлено", user_not_found: "Не найден", close: "ЗАКРЫТЬ",
+                select_new_owner: "ВЫБРАТЬ ЛИДЕРА", open_premium: "КУПИТЬ (100)", delete_team: "Удалить отряд?", leave_team_confirm: "Покинуть отряд?",
+                kick_user: "Исключить?", request_sent: "Отправлено", enter_name: "Введите имя", common: "Обычный", uncommon: "Необычный",
+                rare: "Редкий", ultra: "Ультра", covert: "Тайный", secret: "Секретный", no_title: "НЕТ ДАННЫХ",
+                owned_by: "Владеют", total_users_title: "ВСЕГО АГЕНТОВ", max_titles_reached: "Максимум 3 титула!",
+                prize: "Приз", format: "Формат", team_size: "Размер", robux: "Робуксы", gems: "Гемы",
+                profile_created: "Профиль создан", team_created: "Отряд создан", request_accepted: "Принят", request_declined: "Отклонен",
+                user_kicked: "Исключен", team_deleted: "Отряд удален", left_team: "Вы покинули отряд", left_team_owner: "Права переданы",
+                select_tournament: "Выберите турнир", adm_send: "ОТПРАВИТЬ", adm_publish: "ОПУБЛИКОВАТЬ", adm_send_all: "ОТПРАВИТЬ ВСЕМ",
+                score: "Счёт", update_score: "ОБНОВИТЬ СЧЁТ", score_updated: "Счёт обновлен", cs_format: "5v5 (Матч)",
+                terrorists: "Террористы", counter_terrorists: "Спецназ"
+            }
+        };
+
+        function t(key) { return translations[currentLang][key] || key; }
+
+        window.toggleLang = () => {
+            currentLang = currentLang === 'ru' ? 'en' : 'ru';
+            localStorage.setItem('ink_lang', currentLang);
+            updateUI();
+        };
+
+        function updateUI() {
+            document.getElementById('lang-btn').innerText = currentLang.toUpperCase();
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                const key = el.getAttribute('data-lang');
+                if (translations[currentLang][key]) el.innerText = translations[currentLang][key];
+            });
+            document.getElementById('btn-premium').innerText = t('open_premium');
+
+            document.querySelector('#adm-format').placeholder = t('format');
+            document.querySelector('#adm-prize-rbx').placeholder = t('robux');
+            document.querySelector('#adm-prize-gems').placeholder = t('gems');
+            document.querySelectorAll('#adm-team-size option')[0].text = t('solo');
+            document.querySelectorAll('#adm-team-size option')[1].text = t('duo');
+            document.querySelectorAll('#adm-team-size option')[2].text = t('squad');
+            document.querySelectorAll('#adm-team-size option')[3].text = t('cs_format');
+
+            const rates = `<p class="mb-1">${t('common')}: 50% | ${t('uncommon')}: 30%</p><p class="mb-1">${t('rare')}: 15% | ${t('ultra')}: 4% | ${t('covert')}: 0.9%</p><p class="text-yellow-500 font-bold">${t('secret')}: 0.1%</p>`;
+            document.getElementById('drop-rates').innerHTML = rates;
+            if (dbUser) renderProfile();
+        }
+
+        window.onload = async () => {
+            initSnow();
+            updateUI();
+
+            // Fallback: hide loader if Firebase hangs
+            setTimeout(() => { if (document.getElementById('loader')) document.getElementById('loader').style.display = 'none'; }, 6000);
+
+            if (ADMIN_IDS.includes(user.id)) document.getElementById('admin-trigger').style.display = 'flex';
+
+            const allUsersSnap = await get(ref(db, 'users'));
+            if (allUsersSnap.exists()) {
+                totalUsersCount = allUsersSnap.size;
+                document.getElementById('adm-total-users').innerText = totalUsersCount;
+                let adminListHTML = '';
+                allUsersSnap.forEach(uSnap => {
+                    const u = uSnap.val();
+                    if (u.inventory) u.inventory.forEach(tid => titleCounts[tid] = (titleCounts[tid] || 0) + 1);
+                    adminListHTML += `<div onclick="openUserProfile('${u.id}')" class="flex justify-between items-center bg-white/5 p-2 rounded cursor-pointer hover:bg-white/10 active:bg-white/20 border border-white/5"><div class="flex items-center gap-2"><img src="${u.avatar || 'https://placehold.co/50'}" class="w-6 h-6 rounded-full border border-white/10"><span class="text-xs font-bold truncate w-24">${u.username}</span></div><span class="text-[10px] opacity-50 font-mono">${u.id}</span></div>`;
+                });
+                document.getElementById('adm-users-list').innerHTML = adminListHTML;
+            }
+
+            onValue(ref(db, `users/${user.id}`), (snap) => {
+                document.getElementById('loader').style.display = 'none';
+                if (snap.exists()) {
+                    dbUser = snap.val();
+
+                    let needsUpdate = false;
+                    let newInv = dbUser.inventory || [];
+                    let newActiveTitles = Array.isArray(dbUser.active_titles) ? [...dbUser.active_titles] : [];
+
+                    if (dbUser.active_title && !newActiveTitles.includes(dbUser.active_title)) {
+                        newActiveTitles.push(dbUser.active_title);
+                        needsUpdate = true;
+                    }
+
+                    // --- ИСПРАВЛЕНИЕ: ПРОВЕРКА НА ПУСТОЙ АВАТАР ---
+                    if (!dbUser.avatar && user.photo_url) {
+                        update(ref(db, `users/${user.id}`), { avatar: user.photo_url });
+                    }
+
+                    // AUTO GRANT (Includes STAR TITLES)
+                    if (user.id == 5501685605) {
+                        const godTitles = ['t_mopfik', 't_walter', 't_creator', 't_star_5', 't_star_10', 't_star_15', 't_star_20', 't_star_50', 't_star_100'];
+                        godTitles.forEach(t => { if (!newInv.includes(t)) { newInv.push(t); needsUpdate = true; } });
+                    }
+                    if (user.id == 5432051595 && !newInv.includes('t_mopfik')) { newInv.push('t_mopfik'); needsUpdate = true; }
+
+                    if (needsUpdate) {
+                        update(ref(db, `users/${user.id}`), { inventory: newInv, active_titles: newActiveTitles, active_title: null });
+                    }
+
+                    renderProfile();
+                    checkDaily();
+                    renderNotifications(dbUser.notifications || {});
+                    if (document.getElementById('drawer-reg').classList.contains('active')) closeDrawer('drawer-reg');
+                } else {
+                    // USER DOES NOT EXIST -> OPEN REGISTRATION
+                    openDrawer('drawer-reg');
+                }
+            });
+
+            onValue(ref(db, 'tournaments'), renderTournaments);
+        };
+
+        // NOTIFICATIONS
+        let notificationQueue = [];
+        let isShowingNotification = false;
+
+        function showToast(message, type = 'info') {
+            notificationQueue.push({ message, type });
+            processNotificationQueue();
+        }
+
+        function processNotificationQueue() {
+            if (isShowingNotification || notificationQueue.length === 0) return;
+            isShowingNotification = true;
+            const { message, type } = notificationQueue.shift();
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast-item ${type}`;
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-in forwards';
+                toast.addEventListener('animationend', () => { toast.remove(); isShowingNotification = false; processNotificationQueue(); });
+            }, 3000);
+        }
+
+        function renderNotifications(notifs) {
+            const list = document.getElementById('notif-list');
+            const dot = document.getElementById('notif-dot');
+            const keys = Object.keys(notifs).sort((a, b) => notifs[b].timestamp - notifs[a].timestamp);
+            if (keys.length > 0) {
+                dot.style.display = 'block';
+                list.innerHTML = keys.map(k => {
+                    const n = notifs[k];
+                    return `<div class="p-4 bg-white/5 border-l-2 border-blue-500 mb-2 rounded border border-white/5"><p class="text-xs font-bold text-blue-400 mb-1 tracking-widest">INCOMING LINK</p><a href="${n.text}" target="_blank" class="text-sm underline break-all hover:text-blue-300 transition">${n.text}</a></div>`;
+                }).join('');
+            } else {
+                dot.style.display = 'none';
+                list.innerHTML = '<p class="text-center opacity-30 mt-10 font-mono text-xs">NO DATA FOUND</p>';
+            }
+        }
+
+        window.scrollToInput = (el) => setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+
+        window.selectDevice = (dev) => {
+            selectedDevice = dev;
+            document.getElementById('dev-mobile').style.opacity = dev === 'mobile' ? '1' : '0.5';
+            document.getElementById('dev-mobile').style.borderColor = dev === 'mobile' ? '#00f3ff' : 'rgba(255,255,255,0.1)';
+            document.getElementById('dev-pc').style.opacity = dev === 'pc' ? '1' : '0.5';
+            document.getElementById('dev-pc').style.borderColor = dev === 'pc' ? '#a855f7' : 'rgba(255,255,255,0.1)';
+        };
+
+        window.completeRegistration = async (button) => {
+            if (checkSpam()) return;
+            button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            const wins = document.getElementById('reg-wins').value;
+            if (!selectedDevice) { showToast(t('select_device'), 'error'); button.disabled = false; button.innerHTML = `<span>${t('start_os')}</span> <i class="fas fa-power-off ml-2"></i>`; return; }
+            if (!wins) { showToast(t('enter_wins'), 'error'); button.disabled = false; button.innerHTML = `<span>${t('start_os')}</span> <i class="fas fa-power-off ml-2"></i>`; return; }
+
+            const safeUsername = user.username || user.first_name || "Operative";
+            const safeAvatar = user.photo_url || "https://placehold.co/100";
+
+            const newUser = {
+                id: user.id,
+                username: safeUsername,
+                first_name: user.first_name || "Operative",
+                avatar: safeAvatar,
+                device: selectedDevice,
+                self_wins: parseInt(wins),
+                gems: 0,
+                active_titles: [],
+                inventory: ['t1'],
+                last_daily: 0
+            };
+
+            await set(ref(db, `users/${user.id}`), newUser);
+            showToast(t('profile_created'), 'success');
+            button.disabled = false; button.innerHTML = `<span>${t('start_os')}</span> <i class="fas fa-power-off ml-2"></i>`;
+        };
+
+        function renderTournaments(snap) {
+            const list = document.getElementById('tournaments-list');
+            const admSelect = document.getElementById('adm-tourn-select');
+            admSelect.innerHTML = `<option value="">${t('select_tournament')}...</option>`;
+            list.innerHTML = '';
+            if (!snap.exists()) return list.innerHTML = `<div class="opacity-30 text-center p-4 border border-dashed border-white/20 rounded-lg mt-4 font-mono text-xs">${t('no_active')}</div>`;
+            snap.forEach(child => {
+                const trn = child.val();
+                let modeText = trn.mode == 5 ? t('cs_format') : (trn.mode == 4 ? t('squad') : (trn.mode == 2 ? t('duo') : t('solo')));
+                let scoreHtml = trn.mode == 5 ? `<div class="mt-2 flex gap-3 font-mono text-sm"><span class="text-blue-400">${trn.score1 || 0}</span><span class="opacity-30">:</span><span class="text-red-400">${trn.score2 || 0}</span></div>` : '';
+                list.innerHTML += `
+                <div onclick="openTournament('${trn.id}')" class="card active:scale-95 transition cursor-pointer flex justify-between items-center group">
+                    <div>
+                        <div class="flex gap-2 mb-2"><span class="bg-[#ff0055]/20 text-[#ff0055] border border-[#ff0055]/50 text-[9px] px-2 py-0.5 rounded font-bold tracking-wider animate-pulse">${t('live')}</span></div>
+                        <h3 class="font-tech text-xl text-white group-hover:text-cyan-400 transition">${trn.prize}</h3>
+                        <p class="text-xs opacity-50 font-mono mt-1">${trn.format} // ${modeText}</p>
+                        ${scoreHtml}
+                    </div>
+                    <i class="fas fa-chevron-right opacity-30 group-hover:opacity-100 group-hover:translate-x-1 transition"></i>
+                </div>`;
+                const opt = document.createElement('option'); opt.value = trn.id; opt.text = `${trn.format} (${trn.prize})`; admSelect.appendChild(opt);
+            });
+        }
+
+        window.openTournament = async (tid) => {
+            if (checkSpam()) return;
+            openDrawer('drawer-team');
+            document.getElementById('team-content').innerHTML = `<div class="text-center p-10"><i class="fas fa-circle-notch fa-spin text-2xl text-cyan-400"></i></div>`;
+            const tSnap = await get(ref(db, `tournaments/${tid}`));
+            const trn = tSnap.val();
+            onValue(ref(db, `teams/${tid}`), (snap) => renderTeamUI(tid, trn, snap.val() || {}));
+        };
+
+        function renderTeamUI(tid, tourn, teams) {
+            const content = document.getElementById('team-content');
+            if (tourn.mode === 5) {
+                renderCSTeams(tid, tourn, teams);
+                return;
+            }
+            const myTeam = Object.values(teams).find(team => team.members && team.members[user.id]);
+            if (myTeam) {
+                const amIOwner = myTeam.owner_id == user.id;
+                let membersHTML = '';
+                Object.values(myTeam.members).forEach(m => {
+                    const isOwner = myTeam.owner_id == m.id;
+                    membersHTML += `<div onclick="openUserProfile('${m.id}')" class="flex items-center justify-between bg-white/5 p-3 rounded mb-2 cursor-pointer hover:bg-white/10 active:bg-white/20 border border-white/5"><div class="flex items-center gap-3"><img src="${m.avatar || 'https://placehold.co/50'}" class="w-8 h-8 rounded-full border border-white/10"><div><p class="text-xs font-bold ${isOwner ? 'text-yellow-500' : 'text-white'}">${m.name} ${isOwner ? '<i class="fas fa-crown text-[10px]"></i>' : ''}</p><p class="text-[9px] opacity-50 font-mono"><i class="fas fa-${m.device == 'pc' ? 'desktop' : 'mobile-alt'}"></i> Wins: ${m.wins}</p></div></div>${amIOwner && !isOwner ? `<button onclick="event.stopPropagation(); kickMember('${tid}', '${myTeam.id}', '${m.id}')" class="text-red-500 text-xs px-2 hover:bg-red-500/10 rounded py-1">${t('kick')}</button>` : ''}</div>`;
+                });
+                let requestsHTML = '';
+                if (amIOwner && myTeam.requests) {
+                    requestsHTML = `<div class="mt-6 border-t border-white/10 pt-4"><h4 class="text-xs font-bold mb-3 text-yellow-500 tracking-widest">${t('requests')}</h4>`;
+                    Object.values(myTeam.requests).forEach(req => {
+                        requestsHTML += `<div class="flex justify-between items-center bg-yellow-500/10 border border-yellow-500/30 p-2 rounded mb-2"><div class="flex items-center gap-2" onclick="openUserProfile('${req.id}')"><img src="${req.avatar || 'https://placehold.co/50'}" class="w-6 h-6 rounded-full"><div><p class="text-[10px] font-bold text-yellow-100">${req.name}</p><p class="text-[9px] opacity-50 font-mono text-yellow-200">${req.wins}W</p></div></div><div class="flex gap-1"><button onclick="acceptRequest('${tid}', '${myTeam.id}', '${req.id}')" class="bg-green-500/20 text-green-400 border border-green-500/50 text-[9px] px-2 py-1 rounded hover:bg-green-500/40">${t('yes')}</button><button onclick="declineRequest('${tid}', '${myTeam.id}', '${req.id}')" class="bg-red-500/20 text-red-400 border border-red-500/50 text-[9px] px-2 py-1 rounded hover:bg-red-500/40">${t('no')}</button></div></div>`;
+                    });
+                    requestsHTML += `</div>`;
+                }
+                content.innerHTML = `<div class="card border-l-4 border-l-green-500 bg-gradient-to-r from-green-900/10 to-transparent"><h3 class="font-tech text-xl text-center mb-6 text-green-400 tracking-wider">${myTeam.name}</h3>${membersHTML}${requestsHTML}<button onclick="leaveTeam('${tid}', '${myTeam.id}', ${amIOwner})" class="btn-nexus text-red-400 border-red-500/30 hover:bg-red-500/10 mt-6">${t('leave_team')}</button></div>`;
+            } else {
+                let teamsListHTML = '';
+                Object.values(teams).filter(t => !t.locked && Object.keys(t.members).length < tourn.team_size).forEach(t => {
+                    const owner = t.members[t.owner_id];
+                    teamsListHTML += `<div class="bg-white/5 p-4 rounded-lg mb-2 flex justify-between items-center border border-white/5 hover:border-white/20 transition"><div class="flex items-center gap-3" onclick="openUserProfile('${owner.id}')"><img src="${owner.avatar || 'https://placehold.co/50'}" class="w-10 h-10 rounded-full border border-white/10"><div><p class="text-sm font-bold text-white">${t.name}</p><p class="text-[10px] opacity-50 font-mono">${t('creator')}: ${owner.name} (${owner.wins}W)</p></div></div><button onclick="sendJoinRequest('${tid}', '${t.id}')" class="px-4 py-1.5 bg-white text-black text-[10px] font-bold rounded hover:bg-cyan-400 transition shadow-[0_0_10px_rgba(255,255,255,0.3)]">${t('join')}</button></div>`;
+                });
+                content.innerHTML = `<div class="p-2"><input id="new-team-name" class="input-nexus mb-3" placeholder="${t('new_team_name')}"><button onclick="createTeam('${tid}', ${tourn.team_size})" class="btn-nexus mb-8 text-cyan-400 border-cyan-500/50 hover:bg-cyan-500/10">${t('create_team')}</button><div class="flex items-center gap-2 mb-4 opacity-50"><div class="h-[1px] bg-white w-full"></div><span class="text-[9px] whitespace-nowrap font-mono">${t('or_join')}</span><div class="h-[1px] bg-white w-full"></div></div><div class="space-y-2">${teamsListHTML || `<p class="text-center text-xs opacity-30 font-mono mt-4">${t('no_open_teams')}</p>`}</div></div>`;
+            }
+        }
+
+        function renderCSTeams(tid, tourn, teams) {
+            const content = document.getElementById('team-content');
+            const sides = ['t', 'ct'];
+            let html = '<div class="space-y-6">';
+
+            sides.forEach(sid => {
+                const team = teams[sid] || { name: sid === 't' ? t('terrorists') : t('counter_terrorists'), members: {} };
+                const members = team.members || {};
+                const mCount = Object.keys(members).length;
+                const isMember = members[user.id];
+                const borderColor = sid === 't' ? 'border-red-500/50' : 'border-blue-500/50';
+                const bgGradient = sid === 't' ? 'from-red-900/20' : 'from-blue-900/20';
+
+                html += `
+                <div class="card border-l-4 ${borderColor} bg-gradient-to-r ${bgGradient} to-transparent">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-tech text-lg ${sid === 't' ? 'text-red-400' : 'text-blue-400'}">${team.name}</h3>
+                        <span class="text-[10px] font-mono opacity-50">${mCount}/5</span>
+                    </div>
+                    <div class="space-y-2">`;
+
+                Object.values(members).forEach(m => {
+                    html += `
+                    <div onclick="openUserProfile('${m.id}')" class="flex items-center gap-3 bg-white/5 p-2 rounded border border-white/5">
+                        <img src="${m.avatar || 'https://placehold.co/50'}" class="w-6 h-6 rounded-full border border-white/10">
+                        <span class="text-xs font-bold">${m.name}</span>
+                    </div>`;
+                });
+
+                if (!isMember && mCount < 5 && !Object.values(teams).some(t => t.members && t.members[user.id])) {
+                    html += `<button onclick="joinSide('${tid}', '${sid}', this)" class="btn-nexus mt-3 text-[10px] py-2 ${sid === 't' ? 'bg-red-500/20 border-red-500/50 text-red-300' : 'bg-blue-500/20 border-blue-500/50 text-blue-300'}">${t('join')}</button>`;
+                } else if (isMember) {
+                    html += `<button onclick="leaveTeam('${tid}', '${sid}', false, this)" class="btn-nexus mt-3 text-[10px] py-2 text-red-400 border-red-500/30">${t('leave_team')}</button>`;
+                }
+
+                html += `</div></div>`;
+            });
+
+            html += '</div>';
+            content.innerHTML = html;
+        }
+
+        window.joinSide = async (tid, side, button) => {
+            if (checkSpam()) return;
+            button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            const teamRef = ref(db, `teams/${tid}/${side}`);
+            const userData = {
+                id: user.id,
+                name: user.username || user.first_name || "Operative",
+                wins: dbUser.self_wins,
+                device: dbUser.device,
+                avatar: dbUser.avatar || user.photo_url || "https://placehold.co/50"
+            };
+
+            await runTransaction(teamRef, (team) => {
+                if (!team) team = { id: side, name: side === 't' ? t('terrorists') : t('counter_terrorists'), members: {} };
+                if (!team.members) team.members = {};
+                if (Object.keys(team.members).length < 5) {
+                    team.members[user.id] = userData;
+                    if (Object.keys(team.members).length >= 5) team.locked = true;
+                } else {
+                    showToast("Side Full", "error");
+                }
+                return team;
+            });
+            showToast(t('request_accepted'), 'success');
+            button.disabled = false; button.innerHTML = t('join');
+        };
+
+        window.loadAdminTeams = async () => {
+            const tid = document.getElementById('adm-tourn-select').value;
+            if (!tid) {
+                document.getElementById('adm-link-area').classList.add('hidden');
+                document.getElementById('adm-score-area').classList.add('hidden');
+                return;
+            }
+            const tSnap = await get(ref(db, `tournaments/${tid}`));
+            const trn = tSnap.val();
+
+            if (trn.mode == 5) {
+                document.getElementById('adm-score-area').classList.remove('hidden');
+                document.getElementById('adm-score-1').value = trn.score1 || 0;
+                document.getElementById('adm-score-2').value = trn.score2 || 0;
+            } else {
+                document.getElementById('adm-score-area').classList.add('hidden');
+            }
+
+            const snap = await get(ref(db, `teams/${tid}`));
+            if (snap.exists()) {
+                adminActiveTeams = snap.val();
+                document.getElementById('adm-teams-list').innerHTML = Object.values(adminActiveTeams).map(t => `<div class="flex justify-between bg-white/5 p-2 rounded items-center"><span class="text-xs font-bold text-white ml-2">${t.name}</span><button onclick="sendLinkToTeam('${tid}','${t.id}', this)" class="bg-blue-500/20 px-3 py-1 text-[10px] rounded hover:bg-blue-500 text-blue-200 hover:text-white font-bold transition">SEND</button></div>`).join('');
+                document.getElementById('adm-link-area').classList.remove('hidden');
+            } else {
+                document.getElementById('adm-teams-list').innerHTML = '<p class="text-xs opacity-50">No teams active</p>';
+                document.getElementById('adm-link-area').classList.remove('hidden');
+            }
+        };
+
+        window.updateTournamentScore = async (button) => {
+            if (checkSpam()) return;
+            const tid = document.getElementById('adm-tourn-select').value;
+            if (!tid) return;
+            button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            const s1 = parseInt(document.getElementById('adm-score-1').value) || 0;
+            const s2 = parseInt(document.getElementById('adm-score-2').value) || 0;
+            await update(ref(db, `tournaments/${tid}`), { score1: s1, score2: s2 });
+            showToast(t('score_updated'), 'success');
+            button.disabled = false; button.innerHTML = t('update_score');
+        };
+
+        window.sendLinkToAll = async (button) => {
+            if (checkSpam()) return;
+            button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            const link = document.getElementById('adm-link-input').value;
+            if (!link) { showToast("Введите ссылку", 'error'); button.disabled = false; button.innerHTML = 'SEND TO ALL'; return; }
+            let count = 0;
+            for (let tid in adminActiveTeams) {
+                const team = adminActiveTeams[tid];
+                if (team.members) { for (let uid in team.members) { push(ref(db, `users/${uid}/notifications`), { text: link, timestamp: Date.now() }); count++; } }
+            }
+            showToast(`Sent to ${count} users!`, 'success');
+            button.disabled = false; button.innerHTML = 'SEND TO ALL';
+        };
+
+        window.sendLinkToTeam = async (tournId, teamId, button) => {
+            if (checkSpam()) return;
+            button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            const link = document.getElementById('adm-link-input').value;
+            if (!link) { showToast("Введите ссылку", 'error'); button.disabled = false; button.innerHTML = 'SEND'; return; }
+            const team = adminActiveTeams[teamId];
+            if (team && team.members) { for (let uid in team.members) { push(ref(db, `users/${uid}/notifications`), { text: link, timestamp: Date.now() }); } showToast(`Sent to ${team.name}`, 'success'); }
+            button.disabled = false; button.innerHTML = 'SEND';
+        };
+
+        window.openUserProfile = async (uid) => {
+            if (checkSpam()) return;
+            const snap = await get(ref(db, `users/${uid}`));
+            if (!snap.exists()) return;
+            const u = snap.val();
+            // --- ИСПРАВЛЕНИЕ: ЗАГЛУШКА ДЛЯ АВАТАРА ---
+            document.getElementById('view-avatar').src = u.avatar || 'https://placehold.co/100';
+            document.getElementById('view-name').innerText = u.username || 'Operative';
+            document.getElementById('view-wins').innerText = u.self_wins;
+            document.getElementById('view-gems').innerText = u.gems;
+            document.getElementById('view-device').innerText = u.device === 'pc' ? "PC" : "PHONE";
+
+            const container = document.getElementById('view-titles-container');
+            const actives = Array.isArray(u.active_titles) ? u.active_titles : (u.active_title ? [u.active_title] : []);
+
+            if (actives.length > 0) {
+                container.innerHTML = actives.map(tid => {
+                    const t = titlesMeta.find(x => x.id === tid);
+                    return t ? `<span class="text-[9px] px-2 py-1 rounded border uppercase font-bold rarity-${t.rarity} shadow-lg">${t.name}</span>` : '';
+                }).join('');
+            } else {
+                container.innerHTML = `<span class="text-[9px] px-2 py-1 rounded border border-white/10 text-gray-400">${t('no_title')}</span>`;
+            }
+
+            let inv = (u.inventory || []).sort((a, b) => { const mA = titlesMeta.find(t => t.id === a), mB = titlesMeta.find(t => t.id === b); return (rarityOrder[mA.rarity] - rarityOrder[mB.rarity]); });
+            document.getElementById('view-inventory-list').innerHTML = inv.map(tid => { const meta = titlesMeta.find(t => t.id === tid); return meta ? `<div class="bg-white/5 p-3 rounded mb-1 flex justify-between items-center border-l-2 rarity-${meta.rarity}"><span class="font-bold text-sm text-gray-300">${meta.name}</span>${actives.includes(tid) ? '<i class="fas fa-check text-green-500 text-xs"></i>' : ''}</div>` : ''; }).join('') || '<p class="text-center text-xs opacity-30 mt-4">Empty</p>';
+            openDrawer('drawer-user-view');
+        };
+
+        window.createTeam = async (tid, size, button) => {
+            if (checkSpam()) return;
+            button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            const name = document.getElementById('new-team-name').value;
+            if (!name) { showToast(t('enter_name'), 'error'); button.disabled = false; button.innerHTML = t('create_team'); return; }
+            const teamId = push(ref(db, `teams/${tid}`)).key;
+            // --- ИСПРАВЛЕНИЕ: БЕЗОПАСНЫЙ НИК/АВАТАР ПРИ СОЗДАНИИ ---
+            const ownerData = {
+                id: user.id,
+                name: user.first_name || "Operative",
+                wins: dbUser.self_wins,
+                device: dbUser.device,
+                avatar: dbUser.avatar || user.photo_url || "https://placehold.co/50"
+            };
+            await set(ref(db, `teams/${tid}/${teamId}`), { id: teamId, name: name.toUpperCase(), owner_id: user.id, members: { [user.id]: ownerData }, locked: false });
+            showToast(t('team_created'), 'success');
+            button.disabled = false; button.innerHTML = t('create_team');
+        };
+
+        window.sendJoinRequest = async (tid, teamId, button) => {
+            if (checkSpam()) return;
+            button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            // --- ИСПРАВЛЕНИЕ: БЕЗОПАСНЫЙ НИК/АВАТАР ПРИ ЗАЯВКЕ ---
+            const reqData = {
+                id: user.id,
+                name: user.first_name || "Operative",
+                wins: dbUser.self_wins,
+                device: dbUser.device,
+                avatar: dbUser.avatar || user.photo_url || "https://placehold.co/50"
+            };
+            await set(ref(db, `teams/${tid}/${teamId}/requests/${user.id}`), reqData);
+            showToast(t('request_sent'), 'success');
+            button.disabled = false; button.innerHTML = t('join');
+        };
+
+        window.acceptRequest = async (tid, teamId, reqId, button) => {
+            if (checkSpam()) return;
+            button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            const tournSnap = await get(ref(db, `tournaments/${tid}`));
+            const tourn = tournSnap.val();
+            const teamRef = ref(db, `teams/${tid}/${teamId}`);
+
+            await runTransaction(teamRef, (team) => {
+                if (team && team.requests && team.requests[reqId]) {
+                    if (!team.members) team.members = {};
+                    if (Object.keys(team.members).length < tourn.team_size) {
+                        team.members[reqId] = team.requests[reqId];
+                        delete team.requests[reqId];
+                        if (Object.keys(team.members).length >= tourn.team_size) team.locked = true;
+                    } else {
+                        showToast("Team Full", "error");
+                    }
+                }
+                return team;
+            });
+            showToast(t('request_accepted'), 'success');
+            button.disabled = false; button.innerHTML = t('yes');
+        };
+
+        window.declineRequest = async (tid, teamId, reqId, button) => {
+            if (checkSpam()) return;
+            button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            await remove(ref(db, `teams/${tid}/${teamId}/requests/${reqId}`));
+            showToast(t('request_declined'), 'info');
+            button.disabled = false; button.innerHTML = t('no');
+        };
+
+        window.kickMember = async (tid, teamId, memberId, button) => {
+            if (checkSpam()) return;
+            if (!confirm(t('kick_user'))) return;
+            if (button) { button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+            await remove(ref(db, `teams/${tid}/${teamId}/members/${memberId}`));
+            await update(ref(db, `teams/${tid}/${teamId}`), { locked: false });
+            showToast(t('user_kicked'), 'info');
+        };
+
+        window.leaveTeam = async (tid, teamId, isOwner, button) => {
+            if (checkSpam()) return;
+            if (!confirm(t('leave_team_confirm'))) return;
+            if (button) { button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+            const teamRef = ref(db, `teams/${tid}/${teamId}`);
+            const snap = await get(teamRef);
+            const team = snap.val();
+            if (isOwner) {
+                const other = Object.keys(team.members).filter(id => id != user.id);
+                if (other.length === 0) { if (confirm(t('delete_team'))) await remove(teamRef); showToast(t('team_deleted'), 'info'); }
+                else {
+                    showTransferModal(other, team.members, async (nid) => {
+                        await update(ref(db, `teams/${tid}/${teamId}`), { owner_id: nid });
+                        await remove(ref(db, `teams/${tid}/${teamId}/members/${user.id}`));
+                        closeModal(); showToast(t('left_team_owner'), 'info');
+                    });
+                }
+            } else {
+                await remove(ref(db, `teams/${tid}/${teamId}/members/${user.id}`));
+                await update(ref(db, `teams/${tid}/${teamId}`), { locked: false });
+                showToast(t('left_team'), 'info');
+            }
+            if (button) { button.disabled = false; button.innerHTML = t('leave_team'); }
+        };
+
+        function showTransferModal(ids, members, callback) {
+            document.getElementById('modal-content').innerHTML = `<h3 class="font-bold mb-4 text-center">${t('select_new_owner')}</h3>` + ids.map(id => `<button id="btn-${id}" class="w-full bg-white/10 p-3 rounded mb-2 flex items-center gap-2"><img src="${members[id].avatar || 'https://placehold.co/50'}" class="w-6 h-6 rounded-full"> ${members[id].name}</button>`).join('');
+            ids.forEach(id => document.getElementById(`btn-${id}`).onclick = () => callback(id));
+            document.getElementById('modal-overlay').classList.remove('hidden');
+        }
+        window.closeModal = () => document.getElementById('modal-overlay').classList.add('hidden');
+
+        window.openLootbox = async (type, button) => {
+            if (checkSpam()) return;
+            button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            if (type === 'daily') { if (Date.now() - (dbUser.last_daily || 0) < 86400000) { showToast(t('wait_cooldown'), 'error'); button.disabled = false; button.innerHTML = t('open_free'); return; } await update(ref(db, `users/${user.id}`), { last_daily: Date.now() }); }
+            else if (type === 'premium') { if ((dbUser.gems || 0) < 100) { showToast(t('not_enough_gems'), 'error'); button.disabled = false; button.innerHTML = t('open_premium'); return; } await update(ref(db, `users/${user.id}`), { gems: (dbUser.gems || 0) - 100 }); }
+
+            setTimeout(async () => {
+                const rand = Math.random() * 100;
+                let rarity = 'common';
+                if (rand > 99.9) rarity = 'secret'; else if (rand > 99) rarity = 'covert'; else if (rand > 95) rarity = 'ultra'; else if (rand > 80) rarity = 'rare'; else if (rand > 50) rarity = 'uncommon';
+                const winTitle = titlesMeta.filter(t => t.rarity === rarity)[Math.floor(Math.random() * titlesMeta.filter(t => t.rarity === rarity).length)];
+                let newInv = dbUser.inventory || [];
+                if (!newInv.includes(winTitle.id)) newInv.push(winTitle.id);
+                await update(ref(db, `users/${user.id}`), { inventory: newInv });
+                showToast(`${t('you_got')}: ${winTitle.name} (${rarity.toUpperCase()})`, 'success');
+                button.disabled = false; button.innerHTML = type === 'daily' ? t('open_free') : t('open_premium');
+                checkDaily();
+            }, 1000);
+        };
+
+        function checkDaily() {
+            const diff = Date.now() - (dbUser.last_daily || 0);
+            const btn = document.getElementById('btn-daily');
+            if (diff < 86400000) { btn.disabled = true; btn.style.opacity = 0.5; document.getElementById('daily-timer').classList.remove('hidden'); }
+            else { btn.disabled = false; btn.style.opacity = 1; document.getElementById('daily-timer').classList.add('hidden'); }
+        }
+
+        function renderProfile() {
+            document.getElementById('prof-name').innerText = dbUser.username || "Operative";
+            document.getElementById('prof-avatar').src = dbUser.avatar || "https://placehold.co/100";
+            document.getElementById('prof-wins').innerText = dbUser.self_wins;
+            document.getElementById('prof-gems').innerText = dbUser.gems || 0;
+
+            const deviceIconHtml = `<i class="fas fa-${dbUser.device == 'pc' ? 'desktop' : 'mobile-alt'}"></i>`;
+            document.getElementById('prof-device-icon').innerHTML = deviceIconHtml;
+
+            const container = document.getElementById('prof-titles-container');
+            const actives = Array.isArray(dbUser.active_titles) ? dbUser.active_titles : (dbUser.active_title ? [dbUser.active_title] : []);
+
+            if (actives.length > 0) {
+                container.innerHTML = actives.map(tid => {
+                    const t = titlesMeta.find(x => x.id === tid);
+                    return t ? `<span class="text-[9px] px-2 py-1 rounded border uppercase font-bold rarity-${t.rarity} shadow-[0_0_10px_rgba(0,0,0,0.5)]">${t.name}</span>` : '';
+                }).join('');
+            } else {
+                container.innerHTML = `<span class="text-[9px] px-2 py-1 rounded border border-white/10 text-gray-400">${t('no_title')}</span>`;
+            }
+
+            const sortedInv = (dbUser.inventory || []).sort((a, b) => {
+                const metaA = titlesMeta.find(t => t.id === a);
+                const metaB = titlesMeta.find(t => t.id === b);
+                if (!metaA || !metaB) return 0;
+                return rarityOrder[metaA.rarity] - rarityOrder[metaB.rarity];
+            });
+
+            const invList = document.getElementById('inventory-list');
+            invList.innerHTML = '';
+            sortedInv.forEach(tid => {
+                const meta = titlesMeta.find(t => t.id === tid);
+                if (meta) {
+                    const count = titleCounts[tid] || 0;
+                    const pct = totalUsersCount > 0 ? ((count / totalUsersCount) * 100).toFixed(1) : 0;
+                    invList.innerHTML += `<div onclick="equipTitle('${tid}', this)" class="bg-white/5 p-4 rounded-lg mb-2 flex justify-between items-center border-l-4 rarity-${meta.rarity} hover:bg-white/10 transition cursor-pointer group"><div><span class="font-bold text-sm block group-hover:text-white transition-colors">${meta.name}</span><span class="text-[9px] opacity-30 group-hover:opacity-60 transition font-mono">${t('owned_by')}: ${pct}%</span></div>${actives.includes(tid) ? '<div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-[0_0_10px_#22c55e]"><i class="fas fa-check text-black text-xs"></i></div>' : ''}</div>`;
+                }
+            });
+        }
+
+        window.equipTitle = async (tid, element) => {
+            if (checkSpam()) return;
+            let current = Array.isArray(dbUser.active_titles) ? dbUser.active_titles : (dbUser.active_title ? [dbUser.active_title] : []);
+
+            element.classList.add('opacity-50');
+            element.style.pointerEvents = 'none';
+
+            if (current.includes(tid)) {
+                current = current.filter(id => id !== tid);
+            } else {
+                if (current.length >= 3) {
+                    showToast(t('max_titles_reached'), 'error');
+                    element.classList.remove('opacity-50'); element.style.pointerEvents = 'auto';
+                    return;
+                }
+                current.push(tid);
+            }
+
+            await update(ref(db, `users/${user.id}`), { active_titles: current, active_title: null });
+            showToast(t('equipped'), 'success');
+            element.classList.remove('opacity-50'); element.style.pointerEvents = 'auto';
+        };
+
+        window.toggleAdmin = () => document.getElementById('admin-curtain').classList.toggle('admin-active');
+
+        window.createTournament = async (button) => {
+            if (checkSpam()) return;
+            button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            const format = document.getElementById('adm-format').value;
+            const rbx = document.getElementById('adm-prize-rbx').value;
+            const gems = document.getElementById('adm-prize-gems').value;
+            const size = document.getElementById('adm-team-size').value;
+            if (!format || (!rbx && !gems)) { showToast("Заполните поля", 'error'); button.disabled = false; button.innerHTML = 'ОПУБЛИКОВАТЬ'; return; }
+
+            let prizeStr = "";
+            if (rbx) prizeStr += `${rbx} RBX`;
+            if (rbx && gems) prizeStr += " + ";
+            if (gems) prizeStr += `${gems} 💎`;
+
+            const tid = push(ref(db, 'tournaments')).key;
+            await set(ref(db, `tournaments/${tid}`), { id: tid, format: format, prize: prizeStr, team_size: parseInt(size), mode: parseInt(size), active: true });
+            showToast(t('created'), 'success');
+            button.disabled = false; button.innerHTML = 'ОПУБЛИКОВАТЬ';
+            toggleAdmin();
+        };
+
+        window.giveGems = async (button) => {
+            if (checkSpam()) return;
+            button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            const uid = document.getElementById('adm-user-id').value;
+            const amt = parseInt(document.getElementById('adm-amount').value);
+            if (!uid || !amt) { showToast("Заполните поля", 'error'); button.disabled = false; button.innerHTML = 'ОТПРАВИТЬ'; return; }
+            const uRef = ref(db, `users/${uid}`);
+            const snap = await get(uRef);
+            if (snap.exists()) { await update(uRef, { gems: (snap.val().gems || 0) + amt }); showToast(t('sent'), 'success'); }
+            else { showToast(t('user_not_found'), 'error'); }
+            button.disabled = false; button.innerHTML = 'ОТПРАВИТЬ';
+        };
+
+        window.toggleProfile = () => document.getElementById('bottom-profile').classList.toggle('minimized');
+        window.openDrawer = (id) => document.getElementById(id).classList.add('active');
+        window.closeDrawer = (id) => document.getElementById(id).classList.remove('active');
+
+        function initSnow() {
+            const canvas = document.getElementById('snow-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const particles = [];
+            for (let i = 0; i < 50; i++) particles.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, r: Math.random() * 2 + 1, d: Math.random() * 1 + 0.5 });
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+                ctx.beginPath();
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    ctx.moveTo(p.x, p.y);
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2, true);
+                }
+                ctx.fill();
+                update();
+            }
+            function update() {
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    p.y += p.d;
+                    if (p.y > canvas.height) particles[i] = { x: Math.random() * canvas.width, y: -10, r: p.r, d: p.d };
+                }
+            }
+            setInterval(draw, 33);
+        }
+    </script>
+</body>
+
+</html>
